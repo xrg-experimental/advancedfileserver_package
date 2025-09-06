@@ -1,0 +1,76 @@
+#!/bin/bash
+# Source package specific functions and variables
+source /pkgscripts/include/pkg_util.sh
+
+package="AdvancedFileServer"
+INSTALL_DIR="/lib/${package}/target"
+JRE_MODULES="java.base,java.logging,java.xml,java.sql,java.desktop,java.management,java.naming,java.security.jgss"
+JDK_FULL_NAME="jdk-17.0.10+7"
+JDK_JLINK_NAME="openjdk-17-jre-jlink"
+
+
+case ${MakeClean} in
+    [Yy][Ee][Ss])
+        rm -rf build
+        ;;
+esac
+
+# Clean and create build directory
+clean_build_dir() {
+    rm -rf build
+    mkdir -p build
+}
+
+# Create minimal JRE using jlink
+create_minimal_jre() {
+    local arch=$1
+    local jlink_path
+    local module_path
+    
+    clean_build_dir
+    
+    jlink_path="/usr/lib/jvm/java-17-jdk/bin/jlink"
+    module_path="/usr/lib/jvm/arch/$arch/$JDK_FULL_NAME/jmods"
+
+    
+    ${jlink_path} \
+        --module-path ${module_path} \
+        --add-modules ${JRE_MODULES} \
+        --strip-debug \
+        --no-man-pages \
+        --no-header-files \
+        --compress=2 \
+        --output build/jre
+}
+
+# Extract minimal JRE from binary package
+extract_minimal_jre() {
+    local arch=$1
+    
+    clean_build_dir
+
+    tar xzf /source/${package}/java/${JDK_JLINK_NAME}-${arch}.tar.gz -C build
+}
+
+create_or_extract_minimal_jre() {
+    local arch=$1
+    if [ -f /source/${package}/java/${JDK_JLINK_NAME}-${arch}.tar.gz ]; then
+        extract_minimal_jre ${arch}
+    else
+        create_minimal_jre ${arch}
+    fi
+}
+
+case ${ARCH} in
+    x86_64)
+        create_or_extract_minimal_jre "x86_64"
+        ;;
+    armv8|arm64)
+        create_or_extract_minimal_jre "arm64v8"
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+
+exit 0

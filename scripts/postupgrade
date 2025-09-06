@@ -1,0 +1,30 @@
+#!/bin/sh
+
+### This script will be executed ONLY at package upgraded.
+### Actions after package upgraded.
+### ex. restore user settings.
+
+# Called after package upgrade to finalize installation
+postupgrade() {
+    PACKAGE_NAME="AdvancedFileServer"
+    BACKUP_DIR="/tmp/${PACKAGE_NAME}_backup"
+    
+    # Restore backed up configurations if needed
+    if [ -d "${BACKUP_DIR}/etc" ]; then
+        cp -R "${BACKUP_DIR}/etc" "/var/packages/${PACKAGE_NAME}/target/"
+    fi
+    
+    # Perform database migrations or other upgrade tasks
+    # Example: Run database schema update
+    # /var/packages/${PACKAGE_NAME}/target/bin/migrate-database
+    
+    # Clean up backup directory
+    rm -rf "${BACKUP_DIR}"
+    
+    # Restart service if needed
+    # /var/packages/${PACKAGE_NAME}/target/bin/restart-service
+    
+    exit 0
+}
+
+postupgrade "$@"

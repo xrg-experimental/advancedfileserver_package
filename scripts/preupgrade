@@ -1,0 +1,37 @@
+#!/bin/bash
+
+### This script will execute ONLY when package upgraded.
+### Actions before package upgraded.
+### ex. backup user settings for package upgrade.
+
+# Called before package upgrade to prepare the system
+preupgrade() {
+    # Backup existing configuration
+    PACKAGE_NAME="AdvancedFileServer"
+    BACKUP_DIR="/tmp/${PACKAGE_NAME}_backup"
+    
+    # Create backup directory
+    mkdir -p "${BACKUP_DIR}"
+    
+    # Example: Backup configuration files
+    if [ -d "/var/packages/${PACKAGE_NAME}/target/etc" ]; then
+        cp -R "/var/packages/${PACKAGE_NAME}/target/etc" "${BACKUP_DIR}/"
+    fi
+    
+    # Perform compatibility checks
+    # Example: Check if current version is compatible with upgrade
+    CURRENT_VERSION=$(cat /var/packages/${PACKAGE_NAME}/INFO | grep version | cut -d'"' -f2)
+    
+    # Hypothetical version compatibility check
+    # This is a simplified example - adjust based on your actual versioning logic
+    if [ "$(printf '%s\n' "1.0.0" "$CURRENT_VERSION" | sort -V | head -n1)" = "$CURRENT_VERSION" ]; then
+        echo "Upgrade not supported from version ${CURRENT_VERSION}"
+        exit 1
+    fi
+    
+    # Additional pre-upgrade checks can be added here
+    
+    exit 0
+}
+
+preupgrade "$@"
